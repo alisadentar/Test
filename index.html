@@ -40,6 +40,7 @@ const GITHUB_USER = "alisadentar";
 const REPO_NAME = "Test";
 
 // Функция считывания файлов с GitHub
+// Функция, которая сама заходит в ваш репозиторий и скачивает список всех файлов
 async function fetchRepositoryFiles() {
     const url = "https://github.com";
     try {
@@ -50,6 +51,7 @@ async function fetchRepositoryFiles() {
         
         if (!data.tree) return [];
         
+        // Отбираем только файлы и убираем служебный index.html из поиска
         return data.tree
             .filter(item => item.type === "blob" && item.path !== "index.html" && !item.path.startsWith('.'))
             .map(item => item.path);
@@ -58,6 +60,7 @@ async function fetchRepositoryFiles() {
         return [];
     }
 }
+
 
 async function startSearch() {
     const query = document.getElementById("queryInput").value;
