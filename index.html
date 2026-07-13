@@ -41,7 +41,7 @@ const REPO_NAME = "Test";
 
 // Функция считывания файлов с GitHub
 async function fetchRepositoryFiles() {
-    const url = "https://github.com" + GITHUB_USER + "/" + REPO_NAME + "/git/trees/main?recursive=1";
+    const url = "https://github.com";
     try {
         const response = await fetch(url, {
             headers: { "Authorization": `Bearer ${GITHUB_TOKEN}` }
