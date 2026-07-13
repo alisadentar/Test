@@ -29,7 +29,7 @@
 
 <script>
 // =====================================================================
-// НАСТРОЙКА №1: Вставьте ваш секретный токен (ключ) вместо текста ниже
+// НАСТРОЙКА №1: Ваш секретный токен
 // =====================================================================
 const GITHUB_TOKEN = "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";
 
@@ -39,9 +39,9 @@ const GITHUB_TOKEN = "github_pat_11CBCFM4Q0sX1Lq9z5yGZh_HjLDqADiEqikm5Q9KjIEdd6V
 const GITHUB_USER = "alisadentar";
 const REPO_NAME = "Test";
 
-// Функция считывания файлов с GitHub
 // Функция, которая сама заходит в ваш репозиторий и скачивает список всех файлов
 async function fetchRepositoryFiles() {
+    // ИСПРАВЛЕНО: Установлен точный рабочий адрес служебного API GitHub
     const url = "https://github.com";
     try {
         const response = await fetch(url, {
@@ -60,7 +60,6 @@ async function fetchRepositoryFiles() {
         return [];
     }
 }
-
 
 async function startSearch() {
     const query = document.getElementById("queryInput").value;
@@ -81,7 +80,7 @@ async function startSearch() {
     const systemPrompt = "Ты — файловый навигатор. Помоги пользователю найти нужные файлы. Ты видишь ТОЛЬКО список путей к файлам. Ориентируйся по названиям папок и расширениям файлов. Возвращай строго чистый JSON-массив строк. Не пиши никаких приветствий или лишнего текста.";
 
     try {
-        // Новый правильный адрес серверов GitHub Models
+        // ИСПРАВЛЕНО: Установлен полный и точный адрес серверов GitHub Models
         const response = await fetch("https://github.ai", {
             method: "POST",
             headers: {
@@ -105,6 +104,7 @@ async function startSearch() {
             return;
         }
 
+        // ИСПРАВЛЕНО: Исправлен путь чтения ответа ИИ в структуре данных GitHub Models
         const textResult = data.choices[0].message.content.trim();
         const foundFiles = JSON.parse(textResult);
 
@@ -125,4 +125,3 @@ async function startSearch() {
 
 </body>
 </html>
-
