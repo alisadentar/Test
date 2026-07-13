@@ -21,7 +21,6 @@
 
 <div class="search-container">
     <h2>🔎 Поиск GitHub Models</h2>
-    <!-- Поле для ввода токена прямо на экране сайта -->
     <input type="password" id="tokenInput" placeholder="Вставьте ваш GitHub токен (github_pat_...)">
     <input type="text" id="queryInput" placeholder="Например: найди про животных...">
     <button onclick="startSearch()">Найти файлы</button>
@@ -30,26 +29,17 @@
 </div>
 
 <script>
-const GITHUB_USER = "alisadentar";
-const REPO_NAME = "Test";
-
-// Функция, которая заходит в ваш репозиторий и скачивает список всех файлов
-async function fetchRepositoryFiles(token) {
-    const url = "https://github.com";
+// Загрузка списка файлов из локального файла (без CORS)
+async function fetchRepositoryFiles() {
     try {
-        const response = await fetch(url, {
-            headers: { "Authorization": "Bearer " + token }
-        });
-        const data = await response.json();
-        
-        if (!data.tree) return [];
-        
-        return data.tree
-            .filter(item => item.type === "blob" && item.path !== "index.html" && !item.path.startsWith('.'))
-            .map(item => item.path);
+        const response = await fetch('files.json');  // лежит рядом с index.html
+        if (!response.ok) throw new Error('Не удалось загрузить files.json');
+        const fileList = await response.json();
+        if (!Array.isArray(fileList)) throw new Error('files.json должен содержать массив строк');
+        return fileList;
     } catch (e) {
-        console.error("Не удалось считать файлы с GitHub:", e);
-        return [];
+        console.error("Ошибка при чтении списка файлов:", e);
+        return [];  // вернём пустой массив – обработаем в UI
     }
 }
 
@@ -59,26 +49,27 @@ async function startSearch() {
     const resultsBlock = document.getElementById("resultsBlock");
     
     if (!token) {
-        resultsBlock.innerHTML = "<div class='error'>Ошибка: Пожалуйста, введите ваш токен доступа в верхнее поле!</div>";
+        resultsBlock.innerHTML = "<div class='error'>Ошибка: Пожалуйста, введите ваш токен доступа!</div>";
         return;
     }
     if (!query) return;
 
-    resultsBlock.innerHTML = "<em>Считываю файлы вашей библиотеки...</em>";
+    resultsBlock.innerHTML = "<em>Считываю список файлов...</em>";
 
-    const myFilesList = await fetchRepositoryFiles(token);
+    const myFilesList = await fetchRepositoryFiles();
 
-    if (myFilesList.length === 0) {
-        resultsBlock.innerHTML = "<div class='error'>Ошибка: не удалось прочитать файлы. Проверьте правильность токена.</div>";
+    if (!myFilesList || myFilesList.length === 0) {
+        resultsBlock.innerHTML = "<div class='error'>Ошибка: не удалось загрузить список файлов. Убедитесь, что рядом с index.html лежит файл files.json с корректным JSON-массивом.</div>";
         return;
     }
 
     resultsBlock.innerHTML = "<em>Думаю и ищу через ИИ...</em>";
 
-    const systemPrompt = "Ты — файловый навигатор. Помоги пользователю найти нужные файлы. Ты видишь ТОЛЬКО список путей к файлам. Ориентируйся по названиям папок и расширениям файлов. Возвращай строго чистый JSON-массив строк. Не пиши никаких приветствий или лишнего текста.";
+    const systemPrompt = "Ты — файловый навигатор. Помоги пользователю найти нужные файлы. Ты видишь ТОЛЬКО список путей к файлам. Ориентируйся по названиям папок и расширениям файлов. Возвращай строго чистый JSON-массив строк (например, [\"папка/файл.txt\"]). Не пиши никаких приветствий или лишнего текста.";
 
     try {
-        const response = await fetch("https://github.ai", {
+        // Правильный URL GitHub Models
+        const response = await fetch("https://models.inference.ai.azure.com/chat/completions", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -102,7 +93,14 @@ async function startSearch() {
         }
 
         const textResult = data.choices[0].message.content.trim();
-        const foundFiles = JSON.parse(textResult);
+        let foundFiles;
+        try {
+            foundFiles = JSON.parse(textResult);
+        } catch {
+            // на случай, если модель вернула невалидный JSON
+            resultsBlock.innerHTML = `<div class='error'>Модель вернула ответ не в формате JSON: ${textResult}</div>`;
+            return;
+        }
 
         resultsBlock.innerHTML = "";
         if (foundFiles.length === 0) {
