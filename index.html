@@ -8,8 +8,8 @@
         body { font-family: Arial, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .search-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 400px; text-align: center; }
         h2 { color: #333; margin-bottom: 20px; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input[type="text"]:focus, input[type="password"]:focus { border-color: #2ea44f; }
+        input[type="text"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input[type="text"]:focus { border-color: #2ea44f; }
         button { background-color: #2ea44f; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; font-weight: bold; }
         button:hover { background-color: #2c974b; }
         .results { margin-top: 25px; text-align: left; max-height: 250px; overflow-y: auto; }
@@ -21,7 +21,6 @@
 
 <div class="search-container">
     <h2>🔎 Поиск GitHub Models</h2>
-    <input type="password" id="tokenInput" placeholder="Вставьте ваш GitHub токен">
     <input type="text" id="queryInput" placeholder="Например: найди про животных...">
     <button onclick="startSearch()">Найти файлы</button>
     
@@ -29,7 +28,8 @@
 </div>
 
 <script>
-// Загружаем список файлов из автоматически генерируемого files.json (лежит на том же домене — CORS не страшен)
+const GITHUB_TOKEN = "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";  // ← ВСТАВЬТЕ СЮДА ВАШ ТОКЕН
+
 async function fetchRepositoryFiles() {
     try {
         const response = await fetch('files.json');
@@ -44,14 +44,9 @@ async function fetchRepositoryFiles() {
 }
 
 async function startSearch() {
-    const token = document.getElementById("tokenInput").value.trim();
     const query = document.getElementById("queryInput").value.trim();
     const resultsBlock = document.getElementById("resultsBlock");
     
-    if (!token) {
-        resultsBlock.innerHTML = "<div class='error'>Введите токен!</div>";
-        return;
-    }
     if (!query) {
         resultsBlock.innerHTML = "<div class='error'>Введите поисковый запрос!</div>";
         return;
@@ -61,7 +56,7 @@ async function startSearch() {
     const myFilesList = await fetchRepositoryFiles();
 
     if (myFilesList.length === 0) {
-        resultsBlock.innerHTML = "<div class='error'>Ошибка: не удалось загрузить список файлов. Проверьте, что файл files.json создан и заполнен.</div>";
+        resultsBlock.innerHTML = "<div class='error'>Ошибка: не удалось загрузить список файлов.</div>";
         return;
     }
 
@@ -72,7 +67,7 @@ async function startSearch() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
+                "Authorization": "Bearer " + GITHUB_TOKEN
             },
             body: JSON.stringify({
                 model: "gpt-4o-mini",
